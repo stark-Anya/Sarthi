@@ -1,3 +1,5 @@
+# STARK UI
+
 from telegram import InlineKeyboardButton as Btn, InlineKeyboardMarkup as Markup
 
 E = {
@@ -21,9 +23,9 @@ E = {
     "revision": "🔄",
     "prev":     "⬅️",
     "next":     "➡️",
-    "silly":    "🤪",
+    "silly":    "😣",
     "error":    "❗",
-    "important":"⭐",
+    "important":"🌟",
     "log":      "📒",
     "formula":  "🔢",
     "broadcast":"📢",
@@ -34,12 +36,12 @@ E = {
     "search":   "🔍",
     "skip":     "⏭️",
     "snooze":   "😴",
-    "watch":    "👁️",
+    "watch":    "👀",
     "link":     "🔗",
     "phy":      "⚛️",
     "chem":     "🧪",
     "math":     "📏",
-    "bio":      "🌿",
+    "bio":      "🧬",
     "other":    "📌",
 }
 
