@@ -1,5 +1,5 @@
-BOT_TOKEN  = "YOUR_BOT_TOKEN"
-ADMIN_ID   = 123456789        # integer
-ADMIN_PASS = "yourpassword"
+BOT_TOKEN  = ""
+ADMIN_ID   = 8275132868        # integer
+ADMIN_PASS = "anya"
 DB_PATH    = "jee_saarthi.db"
 TIMEZONE   = "Asia/Kolkata"
