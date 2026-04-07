@@ -1,21 +1,26 @@
+"""
+Memories Handler
+- Silly/Error/Important: click → Add | See options
+- See → history list (note format with titles)
+- Browse entries one by one with nav
+- Delete from both view and search
+- Daily Report: fixed back buttons, update report working
+"""
 from telegram import Update, InlineKeyboardButton as Btn, InlineKeyboardMarkup as Markup
 from telegram.ext import (
     ContextTypes, ConversationHandler, CommandHandler,
     CallbackQueryHandler, MessageHandler, filters
 )
 from database import get_conn
-from ui import mem_home_kb, cancel_btn, back_btn, confirm_delete_kb, nav_kb, skip_btn, E
+from ui import mem_home_kb, cancel_btn, back_btn, confirm_delete_kb, nav_kb, E
 from handlers.common import check_banned
 from datetime import date
 import logging
 
 logger = logging.getLogger(__name__)
 
-# ── States ──────────────────────────────────────────────────────────────────
-(
-    MEM_TITLE, MEM_CONTENT, MEM_ANSWER, MEM_KEYPOINTS,
-    REPORT_CONTENT,
-) = range(5)
+# States
+(MEM_TITLE, MEM_CONTENT, MEM_ANSWER, MEM_KEYPOINTS, REPORT_CONTENT) = range(5)
 
 
 def _uid(update: Update):
@@ -35,24 +40,101 @@ async def mem_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_banned(update):
         return ConversationHandler.END
     await query.edit_message_text(
-        f"{E['memories']} *Memories*\n\nWhat would you like to save?",
+        f"{E['memories']} *Memories*\n\nSelect a category:",
         reply_markup=mem_home_kb(), parse_mode="Markdown"
     )
     return ConversationHandler.END
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  ADD MEMORY — Silly / Error / Important
+#  CATEGORY HOME — Add | See (shown after clicking Silly/Error/Important)
+# ════════════════════════════════════════════════════════════════════════════
+async def mem_category_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Called when user clicks Silly / Error / Important from mem_home."""
+    query = update.callback_query
+    await query.answer()
+    mem_type = query.data.replace("mem_", "")   # silly / error / important
+    label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
+    label = label_map.get(mem_type, mem_type.capitalize())
+
+    uid = _uid(update)
+    conn = get_conn()
+    count = conn.execute(
+        "SELECT COUNT(*) FROM memories WHERE user_id=? AND mem_type=?", (uid, mem_type)
+    ).fetchone()[0]
+    conn.close()
+
+    kb = Markup([
+        [Btn(f"➕ Add",                    callback_data=f"mem_add_{mem_type}"),
+         Btn(f"📋 See ({count})",           callback_data=f"mem_history_{mem_type}")],
+        [Btn(f"{E['back']} Back",          callback_data="mem_home")],
+    ])
+    await query.edit_message_text(
+        f"{label} Memories\n\n{count} entries saved.",
+        reply_markup=kb
+    )
+    return ConversationHandler.END
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  HISTORY LIST — note format with all titles
+# ════════════════════════════════════════════════════════════════════════════
+async def mem_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show all titles in note format. User can tap to open or copy title for /search."""
+    query = update.callback_query
+    await query.answer()
+    mem_type = query.data.replace("mem_history_", "")
+    uid = _uid(update)
+    conn = get_conn()
+    mems = conn.execute(
+        "SELECT id, title, created FROM memories WHERE user_id=? AND mem_type=? ORDER BY created DESC",
+        (uid, mem_type)
+    ).fetchall()
+    conn.close()
+
+    label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
+    label = label_map.get(mem_type, mem_type.capitalize())
+
+    if not mems:
+        await query.edit_message_text(
+            f"No {label} memories yet.",
+            reply_markup=back_btn(f"mem_{mem_type}")
+        )
+        return ConversationHandler.END
+
+    # Build note format text
+    lines = [f"📋 *{label} — All Entries*\n"]
+    for i, m in enumerate(mems, 1):
+        lines.append(f"`{i}.` *{m['title']}*  —  {m['created'][:10]}")
+    lines.append("\n💡 Tap an entry to open, or copy title and use `/search title`")
+    text = "\n".join(lines)
+
+    # Buttons: each entry opens it
+    kb_rows = []
+    for i, m in enumerate(mems):
+        kb_rows.append([Btn(f"{i+1}. {m['title'][:40]}", callback_data=f"mem_view_{mem_type}_{i}")])
+    kb_rows.append([Btn(f"{E['back']} Back", callback_data=f"mem_{mem_type}")])
+
+    # Telegram message limit: if too long, truncate text
+    if len(text) > 4000:
+        text = text[:3900] + "\n...more entries below ↓"
+
+    await query.edit_message_text(text, reply_markup=Markup(kb_rows), parse_mode="Markdown")
+    return ConversationHandler.END
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ADD MEMORY
 # ════════════════════════════════════════════════════════════════════════════
 async def mem_add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    mem_type = query.data.replace("mem_", "")          # silly / error / important
+    mem_type = query.data.replace("mem_add_", "")
     context.user_data["mem_draft"] = {"type": mem_type}
     labels = {"silly": "🤪 Silly Mistake", "error": "❗ Error", "important": "⭐ Important"}
     await query.edit_message_text(
         f"{labels.get(mem_type, 'Memory')} — Step 1\n\nEnter a *title* for this memory:",
-        reply_markup=cancel_btn("mem_home"), parse_mode="Markdown"
+        reply_markup=cancel_btn(f"mem_{mem_type}"), parse_mode="Markdown"
     )
     return MEM_TITLE
 
@@ -61,7 +143,6 @@ async def mem_got_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_banned(update):
         return ConversationHandler.END
     context.user_data["mem_draft"]["title"] = update.message.text.strip()
-    mem_type = context.user_data["mem_draft"]["type"]
     await update.message.reply_text(
         "Step 2 — Send the *content* (text or image/photo):",
         reply_markup=cancel_btn("mem_home"), parse_mode="Markdown"
@@ -74,19 +155,17 @@ async def mem_got_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     draft = context.user_data["mem_draft"]
     if update.message.photo:
-        draft["file_id"] = update.message.photo[-1].file_id
+        draft["file_id"]   = update.message.photo[-1].file_id
         draft["file_type"] = "photo"
-        draft["content"] = update.message.caption or ""
+        draft["content"]   = update.message.caption or ""
     else:
-        draft["content"] = update.message.text.strip()
-        draft["file_id"] = None
+        draft["content"]   = update.message.text.strip()
+        draft["file_id"]   = None
         draft["file_type"] = None
 
     if draft["type"] == "silly":
-        # Save immediately
         return await _save_memory(update, context)
     else:
-        # error / important — ask for answer
         await update.message.reply_text(
             "Step 3 — Send the *answer* (text or image) or skip:",
             reply_markup=Markup([
@@ -100,9 +179,7 @@ async def mem_got_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mem_skip_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    context.user_data["mem_draft"]["answer"] = None
-    context.user_data["mem_draft"]["ans_file"] = None
-    context.user_data["mem_draft"]["ans_ftype"] = None
+    context.user_data["mem_draft"].update({"answer": None, "ans_file": None, "ans_ftype": None})
     await query.edit_message_text(
         "Step 4 — Enter *key points* (text) or skip:",
         reply_markup=Markup([
@@ -118,12 +195,12 @@ async def mem_got_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     draft = context.user_data["mem_draft"]
     if update.message.photo:
-        draft["ans_file"] = update.message.photo[-1].file_id
+        draft["ans_file"]  = update.message.photo[-1].file_id
         draft["ans_ftype"] = "photo"
-        draft["answer"] = update.message.caption or ""
+        draft["answer"]    = update.message.caption or ""
     else:
-        draft["answer"] = update.message.text.strip()
-        draft["ans_file"] = None
+        draft["answer"]    = update.message.text.strip()
+        draft["ans_file"]  = None
         draft["ans_ftype"] = None
     await update.message.reply_text(
         "Step 4 — Enter *key points* (text) or skip:",
@@ -165,8 +242,13 @@ async def _save_memory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     conn.commit()
     conn.close()
-    text = f"✅ Memory saved under *{d.get('type', '').capitalize()}*!"
-    kb = Markup([[Btn(f"{E['back']} Back to Memories", callback_data="mem_home")]])
+    mem_type = d.get("type", "silly")
+    text = f"✅ Saved under *{mem_type.capitalize()}*!"
+    kb = Markup([
+        [Btn(f"➕ Add Another",    callback_data=f"mem_add_{mem_type}"),
+         Btn(f"📋 See All",        callback_data=f"mem_history_{mem_type}")],
+        [Btn(f"{E['back']} Memories", callback_data="mem_home")],
+    ])
     if update.callback_query:
         await update.callback_query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
     else:
@@ -175,19 +257,15 @@ async def _save_memory(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  VIEW MEMORIES — nav with Prev/Next
+#  VIEW ENTRY — one at a time with Prev/Next
 # ════════════════════════════════════════════════════════════════════════════
 async def mem_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    # pattern: mem_view_silly_0
     parts = query.data.split("_")
-    # Pattern: mem_view_silly_0 OR mem_silly (first time)
-    if query.data.startswith("mem_view_"):
-        mem_type = parts[2]
-        idx = int(parts[3])
-    else:
-        mem_type = parts[1]
-        idx = 0
+    mem_type = parts[2]
+    idx      = int(parts[3])
 
     uid = _uid(update)
     conn = get_conn()
@@ -200,12 +278,12 @@ async def mem_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not mems:
         await query.edit_message_text(
             f"No {mem_type} memories yet!",
-            reply_markup=back_btn("mem_home")
+            reply_markup=back_btn(f"mem_{mem_type}")
         )
         return ConversationHandler.END
 
     idx = max(0, min(idx, len(mems) - 1))
-    m = mems[idx]
+    m   = mems[idx]
     label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
     text = (
         f"{label_map.get(mem_type, mem_type)} — *{m['title']}*\n"
@@ -215,18 +293,19 @@ async def mem_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
     extra_rows = []
     if mem_type in ("error", "important") and (m["answer"] or m["keypoints"]):
         extra_rows.append([Btn("📖 Answer & Key Points", callback_data=f"mem_ans_{mem_type}_{idx}")])
-    extra_rows.append([Btn("🗑️ Delete this", callback_data=f"mem_del_confirm_{mem_type}_{m['id']}")])
-    extra_rows.append([Btn(f"{E['back']} Back", callback_data="mem_home")])
+    extra_rows.append([Btn("🗑️ Delete", callback_data=f"mem_del_confirm_{mem_type}_{m['id']}")])
+    extra_rows.append([Btn(f"{E['back']} Back to List", callback_data=f"mem_history_{mem_type}")])
     kb = nav_kb(f"mem_view_{mem_type}", idx, len(mems), extra_rows)
 
     if m["file_id"] and m["file_type"] == "photo":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
         await context.bot.send_photo(
             update.effective_user.id,
-            photo=m["file_id"],
-            caption=text,
-            reply_markup=kb,
-            parse_mode="Markdown"
+            photo=m["file_id"], caption=text,
+            reply_markup=kb, parse_mode="Markdown"
         )
     else:
         await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
@@ -236,9 +315,9 @@ async def mem_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mem_show_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    parts = query.data.split("_")
+    parts    = query.data.split("_")
     mem_type = parts[2]
-    idx = int(parts[3])
+    idx      = int(parts[3])
     uid = _uid(update)
     conn = get_conn()
     mems = conn.execute(
@@ -249,34 +328,40 @@ async def mem_show_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not mems or idx >= len(mems):
         await query.answer("Not found.", show_alert=True)
         return ConversationHandler.END
-    m = mems[idx]
+    m    = mems[idx]
     text = f"📖 *Answer:*\n{m['answer'] or 'N/A'}\n\n🔑 *Key Points:*\n{m['keypoints'] or 'N/A'}"
-    kb = Markup([[Btn(f"{E['back']} Back to Entry", callback_data=f"mem_view_{mem_type}_{idx}")]])
+    kb   = Markup([[Btn(f"{E['back']} Back to Entry", callback_data=f"mem_view_{mem_type}_{idx}")]])
     if m["ans_file"] and m["ans_ftype"] == "photo":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
         await context.bot.send_photo(
             update.effective_user.id,
-            photo=m["ans_file"],
-            caption=text,
-            reply_markup=kb,
-            parse_mode="Markdown"
+            photo=m["ans_file"], caption=text,
+            reply_markup=kb, parse_mode="Markdown"
         )
     else:
         await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
     return ConversationHandler.END
 
 
+# ════════════════════════════════════════════════════════════════════════════
+#  DELETE
+# ════════════════════════════════════════════════════════════════════════════
 async def mem_del_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    parts = query.data.split("_")
+    # pattern: mem_del_confirm_silly_42
+    parts    = query.data.split("_")
     mem_type = parts[3]
-    mem_id = int(parts[4])
+    mem_id   = int(parts[4])
+    context.user_data["del_mem_type"] = mem_type
     await query.edit_message_text(
         "⚠️ *This cannot be undone.* Delete this memory?",
         reply_markup=confirm_delete_kb(
             f"mem_del_yes_{mem_type}_{mem_id}",
-            f"mem_view_{mem_type}_0"
+            f"mem_history_{mem_type}"
         ),
         parse_mode="Markdown"
     )
@@ -286,22 +371,22 @@ async def mem_del_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mem_del_yes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    parts = query.data.split("_")
+    parts    = query.data.split("_")
     mem_type = parts[3]
-    mem_id = int(parts[4])
+    mem_id   = int(parts[4])
     conn = get_conn()
     conn.execute("DELETE FROM memories WHERE id=?", (mem_id,))
     conn.commit()
     conn.close()
     await query.edit_message_text(
         "🗑️ Memory deleted.",
-        reply_markup=back_btn("mem_home")
+        reply_markup=back_btn(f"mem_history_{mem_type}")
     )
     return ConversationHandler.END
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  DAILY REPORT
+#  DAILY REPORT — fixed back buttons & update report
 # ════════════════════════════════════════════════════════════════════════════
 async def daily_log_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -316,12 +401,13 @@ async def daily_log_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     kb_rows = []
     if today_report:
         kb_rows.append([Btn("📒 See Today's Report", callback_data="report_view_today")])
+        kb_rows.append([Btn("✍️ Update Today's Report", callback_data="report_write")])
     else:
         kb_rows.append([Btn("✍️ Write Today's Report", callback_data="report_write")])
     kb_rows.append([Btn("📚 Browse All Reports", callback_data="report_browse_0")])
     kb_rows.append([Btn(f"{E['back']} Back", callback_data="mem_home")])
     await query.edit_message_text(
-        f"📒 *Daily Report*\n\nDate: {today_str}",
+        f"📒 *Daily Report*\n\nToday: {today_str}",
         reply_markup=Markup(kb_rows), parse_mode="Markdown"
     )
     return ConversationHandler.END
@@ -331,7 +417,7 @@ async def report_write_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(
-        "✍️ *Write Today's Report*\n\nSend your report (text or image):",
+        "✍️ *Write / Update Today's Report*\n\nSend your report (text or image):",
         reply_markup=cancel_btn("daily_log_home"), parse_mode="Markdown"
     )
     return REPORT_CONTENT
@@ -343,12 +429,12 @@ async def report_got_content(update: Update, context: ContextTypes.DEFAULT_TYPE)
     uid = _uid(update)
     today_str = date.today().isoformat()
     if update.message.photo:
-        file_id = update.message.photo[-1].file_id
+        file_id   = update.message.photo[-1].file_id
         file_type = "photo"
-        content = update.message.caption or ""
+        content   = update.message.caption or ""
     else:
-        content = update.message.text.strip()
-        file_id = None
+        content   = update.message.text.strip()
+        file_id   = None
         file_type = None
     conn = get_conn()
     conn.execute(
@@ -364,7 +450,10 @@ async def report_got_content(update: Update, context: ContextTypes.DEFAULT_TYPE)
     conn.close()
     await update.message.reply_text(
         "✅ Today's report saved!",
-        reply_markup=back_btn("daily_log_home")
+        reply_markup=Markup([
+            [Btn("📒 View Report",    callback_data="report_view_today")],
+            [Btn(f"{E['back']} Back", callback_data="daily_log_home")]
+        ])
     )
     return ConversationHandler.END
 
@@ -375,25 +464,33 @@ async def report_view_today(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = _uid(update)
     today_str = date.today().isoformat()
     conn = get_conn()
-    r = conn.execute("SELECT * FROM daily_reports WHERE user_id=? AND date=?",
-                     (uid, today_str)).fetchone()
+    r = conn.execute(
+        "SELECT * FROM daily_reports WHERE user_id=? AND date=?", (uid, today_str)
+    ).fetchone()
     conn.close()
     if not r:
-        await query.edit_message_text("No report for today yet.", reply_markup=back_btn("daily_log_home"))
+        await query.edit_message_text(
+            "No report for today yet.",
+            reply_markup=Markup([
+                [Btn("✍️ Write Now",     callback_data="report_write")],
+                [Btn(f"{E['back']} Back", callback_data="daily_log_home")]
+            ])
+        )
         return ConversationHandler.END
     text = f"📒 *Daily Report — {r['date']}*\n\n{r['content'] or ''}"
     kb = Markup([
-        [Btn("✍️ Update Report", callback_data="report_write")],
+        [Btn("✍️ Update Report",  callback_data="report_write")],
         [Btn(f"{E['back']} Back", callback_data="daily_log_home")]
     ])
     if r["file_id"] and r["file_type"] == "photo":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
         await context.bot.send_photo(
             update.effective_user.id,
-            photo=r["file_id"],
-            caption=text,
-            reply_markup=kb,
-            parse_mode="Markdown"
+            photo=r["file_id"], caption=text,
+            reply_markup=kb, parse_mode="Markdown"
         )
     else:
         await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
@@ -411,21 +508,25 @@ async def report_browse(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ).fetchall()
     conn.close()
     if not reports:
-        await query.edit_message_text("No reports yet.", reply_markup=back_btn("daily_log_home"))
+        await query.edit_message_text(
+            "No reports yet.",
+            reply_markup=back_btn("daily_log_home")
+        )
         return ConversationHandler.END
     idx = max(0, min(idx, len(reports) - 1))
-    r = reports[idx]
+    r   = reports[idx]
     text = f"📒 *Daily Report — {r['date']}*\n\n{r['content'] or ''}"
     extra = [[Btn(f"{E['back']} Back", callback_data="daily_log_home")]]
     kb = nav_kb("report_browse", idx, len(reports), extra)
     if r["file_id"] and r["file_type"] == "photo":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
         await context.bot.send_photo(
             update.effective_user.id,
-            photo=r["file_id"],
-            caption=text,
-            reply_markup=kb,
-            parse_mode="Markdown"
+            photo=r["file_id"], caption=text,
+            reply_markup=kb, parse_mode="Markdown"
         )
     else:
         await query.edit_message_text(text, reply_markup=kb, parse_mode="Markdown")
@@ -451,40 +552,48 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  BUILD ConversationHandler
+#  BUILD
 # ════════════════════════════════════════════════════════════════════════════
 def build_mem_conv():
     return ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(mem_home,         pattern="^mem_home$"),
-            CallbackQueryHandler(mem_add_start,    pattern="^mem_(silly|error|important)$"),
-            CallbackQueryHandler(mem_view,         pattern=r"^mem_view_(silly|error|important)_\d+$"),
-            CallbackQueryHandler(mem_view,         pattern=r"^mem_(silly|error|important)$"),
-            CallbackQueryHandler(mem_show_answer,  pattern=r"^mem_ans_(error|important)_\d+$"),
-            CallbackQueryHandler(mem_del_confirm,  pattern=r"^mem_del_confirm_(silly|error|important)_\d+$"),
-            CallbackQueryHandler(mem_del_yes,      pattern=r"^mem_del_yes_(silly|error|important)_\d+$"),
-            CallbackQueryHandler(daily_log_home,   pattern="^daily_log_home$"),
+            CallbackQueryHandler(mem_home,           pattern="^mem_home$"),
+            # Category home (Add | See choice)
+            CallbackQueryHandler(mem_category_home,  pattern=r"^mem_(silly|error|important)$"),
+            # History list
+            CallbackQueryHandler(mem_history,        pattern=r"^mem_history_(silly|error|important)$"),
+            # Add
+            CallbackQueryHandler(mem_add_start,      pattern=r"^mem_add_(silly|error|important)$"),
+            # View entry
+            CallbackQueryHandler(mem_view,           pattern=r"^mem_view_(silly|error|important)_\d+$"),
+            # Answer/keypoints
+            CallbackQueryHandler(mem_show_answer,    pattern=r"^mem_ans_(error|important)_\d+$"),
+            # Delete
+            CallbackQueryHandler(mem_del_confirm,    pattern=r"^mem_del_confirm_(silly|error|important)_\d+$"),
+            CallbackQueryHandler(mem_del_yes,        pattern=r"^mem_del_yes_(silly|error|important)_\d+$"),
+            # Daily log
+            CallbackQueryHandler(daily_log_home,     pattern="^daily_log_home$"),
             CallbackQueryHandler(report_write_start, pattern="^report_write$"),
             CallbackQueryHandler(report_view_today,  pattern="^report_view_today$"),
-            CallbackQueryHandler(report_browse,    pattern=r"^report_browse_\d+$"),
+            CallbackQueryHandler(report_browse,      pattern=r"^report_browse_\d+$"),
         ],
         states={
-            MEM_TITLE:    [MessageHandler(filters.TEXT & ~filters.COMMAND, mem_got_title)],
-            MEM_CONTENT:  [
-                MessageHandler(filters.PHOTO, mem_got_content),
+            MEM_TITLE:     [MessageHandler(filters.TEXT & ~filters.COMMAND, mem_got_title)],
+            MEM_CONTENT:   [
+                MessageHandler(filters.PHOTO,                mem_got_content),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, mem_got_content),
             ],
-            MEM_ANSWER:   [
-                MessageHandler(filters.PHOTO, mem_got_answer),
+            MEM_ANSWER:    [
+                MessageHandler(filters.PHOTO,                mem_got_answer),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, mem_got_answer),
                 CallbackQueryHandler(mem_skip_answer, pattern="^mem_skip_answer$"),
             ],
-            MEM_KEYPOINTS:[
+            MEM_KEYPOINTS: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, mem_got_kp),
                 CallbackQueryHandler(mem_skip_kp, pattern="^mem_skip_kp$"),
             ],
             REPORT_CONTENT:[
-                MessageHandler(filters.PHOTO, report_got_content),
+                MessageHandler(filters.PHOTO,                report_got_content),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, report_got_content),
             ],
         },
