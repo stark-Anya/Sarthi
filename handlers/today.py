@@ -540,7 +540,7 @@ async def score_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = f"{E['score']} *Test Scores*\n\n"
     if rows:
         for r in rows:
-            text += f"📝 *{r['test_name']}* — {r['date']}\n  P:{r['phy']} C:{r['chem']} M:{r['math']} → *{r['total']}*\n\n"
+            text += f"📝 *{r['test_name']}* — {r['date']}\n  P ➻ {r['phy']}, C ➻ {r['chem']}, M/B ➻ {r['math']} → *{r['total']}*\n\n"
     else:
         text += "No scores yet.\n"
     kb_rows = [
@@ -611,7 +611,7 @@ async def score_add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def score_got_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["score_draft"] = {"name": update.message.text.strip()}
-    await update.message.reply_text("Enter Physics score:", reply_markup=cancel_btn("score_home"))
+    await update.message.reply_text("🎗️ Enter Physics score:", reply_markup=cancel_btn("score_home"))
     return SCORE_PHY
 
 
@@ -621,7 +621,7 @@ async def score_got_phy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except ValueError:
         await update.message.reply_text("❌ Enter a valid number for Physics:")
         return SCORE_PHY
-    await update.message.reply_text("Enter Chemistry score:", reply_markup=cancel_btn("score_home"))
+    await update.message.reply_text("🎗️ Enter Chemistry score:", reply_markup=cancel_btn("score_home"))
     return SCORE_CHEM
 
 
@@ -631,7 +631,7 @@ async def score_got_chem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except ValueError:
         await update.message.reply_text("❌ Enter a valid number for Chemistry:")
         return SCORE_CHEM
-    await update.message.reply_text("Enter Mathematics score:", reply_markup=cancel_btn("score_home"))
+    await update.message.reply_text("🎗️ Enter Maths / Bio score:", reply_markup=cancel_btn("score_home"))
     return SCORE_MATH
 
 
@@ -639,7 +639,7 @@ async def score_got_math(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         math_score = float(update.message.text.strip())
     except ValueError:
-        await update.message.reply_text("❌ Enter a valid number for Math:")
+        await update.message.reply_text("❌ Enter a valid number for Math / Bio:")
         return SCORE_MATH
     d = context.user_data["score_draft"]
     d["math"] = math_score
@@ -653,7 +653,7 @@ async def score_got_math(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     conn.close()
     await update.message.reply_text(
-        f"✅ Score saved!\n\n*{d['name']}*\nP:{d['phy']} C:{d['chem']} M:{d['math']}\n🎯 Total: *{total}*",
+        f"✅ Score saved!\n\n*{d['name']}*\nP ➻ {d['phy']}, C ➻ {d['chem']}, M/B ➻ {d['math']}\n🎯 Total: *{total}*",
         reply_markup=back_btn("score_home"), parse_mode="Markdown"
     )
     return ConversationHandler.END
