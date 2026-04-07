@@ -31,8 +31,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         f"👋 *Welcome back, {user.first_name}!*\n\n"
         f"📅 {today_str}\n"
-        f"🔥 Current Streak: *{streak} day(s)*\n\n"
-        f"What would you like to do today?"
+        f"🔥 *Current Streak:* *{streak} day(s)*\n\n"
+        f"📑 *How to use this bot* : [Click Here](https://t.me/Sharemyfiles_bot?start=54f7fce7-7a67-4c16-b3a7-147211dee6c7)\n"     
+        f"*What would you like to do today?*"
     )
     await update.message.reply_text(text, reply_markup=home_kb(), parse_mode="Markdown")
 
@@ -49,9 +50,9 @@ async def home_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         f"👋 *Welcome back, {user.first_name}!*\n\n"
         f"📅 {today_str}\n"
-        f"🔥 Current Streak: *{streak} day(s)*\n\n"
+        f"*🔥 Current Streak:* *{streak} day(s)*\n\n"
         f"📑 *How to use this bot* : [Click Here](https://t.me/Sharemyfiles_bot?start=54f7fce7-7a67-4c16-b3a7-147211dee6c7)\n"     
-        f"What would you like to do today?"
+        f"*What would you like to do today?*"
     )
     await query.edit_message_text(text, reply_markup=home_kb(), parse_mode="Markdown")
 
