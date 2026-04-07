@@ -47,10 +47,11 @@ async def home_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     streak = db_user["streak"] if db_user else 0
     today_str = date.today().strftime("%A, %d %B %Y")
     text = (
-        f"🏠 *Home*\n\n"
+        f"👋 *Welcome back, {user.first_name}!*\n\n"
         f"📅 {today_str}\n"
-        f"🔥 Streak: *{streak} day(s)*\n\n"
-        f"Choose a section:"
+        f"🔥 Current Streak: *{streak} day(s)*\n\n"
+        f"📑 *How to use this bot* : [Click Here](https://t.me/Sharemyfiles_bot?start=54f7fce7-7a67-4c16-b3a7-147211dee6c7)\n"     
+        f"What would you like to do today?"
     )
     await query.edit_message_text(text, reply_markup=home_kb(), parse_mode="Markdown")
 
