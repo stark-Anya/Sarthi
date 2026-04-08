@@ -8,7 +8,7 @@ E = {
     "formulas": "📐",
     "thoughts": "💭",
     "motivation": "🔥",
-    "admin":    "🛡️",
+    "admin":    "🧑‍💻",
     "back":     "◀️",
     "cancel":   "❌",
     "done":     "✅",
