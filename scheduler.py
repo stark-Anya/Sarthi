@@ -183,3 +183,16 @@ def setup_scheduler(app):
 
     scheduler.start()
     logger.info("[Scheduler] All jobs started.")
+
+
+
+async def job_backup_db(app):
+    from config import ADMIN_ID, DB_PATH
+    try:
+        await app.bot.send_document(
+            ADMIN_ID,
+            document=open(DB_PATH, "rb"),
+            caption=f"🗄 Daily DB Backup — {datetime.date.today()}"
+        )
+    except Exception as e:
+        print(f"Backup failed: {e}")
