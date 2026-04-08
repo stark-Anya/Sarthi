@@ -44,7 +44,7 @@ async def formula_class(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     if not rows:
         await query.edit_message_text(
-            f"No formulas uploaded for Class {class_num} yet.",
+            f"No formulas uploaded for Class {class_num} yet. Contact Admin ( @carelessxstark ) to add formula's",
             reply_markup=back_btn("formula_home")
         )
         return ConversationHandler.END
