@@ -134,42 +134,63 @@ TIMEZONE       = "Asia/Kolkata"
 ```
 
 ---
+<details>
+  <summary><b>🖥️ VPS / Ubuntu Server (Recommended · Full Control)</b></summary>
 
-### 🖥️ VPS / Ubuntu Server *(Recommended · Full Control)*
+## 🚀 Step 1 — Setup Server & Install Dependencies
 
-**Step 1 — SSH into server & install dependencies**
+### 🔄 Update system & install required packages
 ```bash
-# Update & install Python
 sudo apt update && sudo apt install -y python3.11 python3-pip git screen
+```
 
-# Clone your project
-git clone https://github.com/yourusername/jee-saarthi.git
-cd jee-saarthi
+### 📥 Clone the repository
+```bash
+git clone https://github.com/stark-Anya/Sarthi
+cd Sarthi
+```
 
-# Create virtual environment
+### 🧪 Create & activate virtual environment
+```bash
 python3 -m venv myenv
 source myenv/bin/activate
+```
 
-# Install requirements
+### 📦 Install dependencies
+```bash
 pip install -r requirements.txt
+```
 
-# Edit config with your credentials
+### ⚙️ Configure your bot
+```bash
 nano config.py
 ```
 
-**Step 2 — Run with screen (keeps bot alive after SSH disconnect)**
+---
+
+## ⚡ Step 2 — Run Bot Using Screen (Recommended)
+
+Keeps your bot running even after SSH disconnect.
+
 ```bash
 screen -S jeebot
 python bot.py
-
-# Detach: Ctrl+A then D
-# Reattach later: screen -r jeebot
 ```
 
-**Step 3 — Optional: systemd service for auto-restart**
+### 🔌 Useful Screen Commands
+- Detach: `Ctrl + A` then `D`
+- Reattach: `screen -r jeebot`
+
+---
+
+## 🔁 Step 3 — Setup Auto-Restart (systemd Service) *(Optional)*
+
+### Create service file
 ```bash
 sudo nano /etc/systemd/system/jeebot.service
 ```
+
+### Paste the following configuration
 ```ini
 [Unit]
 Description=JEE Saarthi Bot
@@ -185,6 +206,8 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 ```
+
+### Enable & start the service
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable jeebot
@@ -192,11 +215,22 @@ sudo systemctl start jeebot
 sudo systemctl status jeebot
 ```
 
+</details>
+
+---
+<details>
+  <summary><b>🌐 Render (Free Tier Available · Beginner Friendly · Auto Deploy)</b></summary>
+
+## 🚀 Overview
+Render ek cloud platform hai jahan tum bina VPS manage kiye apna Telegram bot easily deploy kar sakte ho.  
+Free tier me bhi bot smoothly chal jata hai (with some limits).
+
 ---
 
-### 🌐 Render *(Free Tier Available · Easy Setup)*
+## 🧾 Step 1 — Create `render.yaml`
 
-**Step 1 — Create `render.yaml` in project root**
+Project ke root folder me ek file banao:
+
 ```yaml
 services:
   - type: worker
@@ -211,47 +245,189 @@ services:
         value: "123456789"
 ```
 
-**Step 2 —** Push to GitHub → Connect on Render dashboard → Add Environment Variables → Deploy
-
-> Go to render.com → New → Background Worker → Connect repo → Set env vars → Create Service
-
-**Step 3 — Add a persistent disk**
-
-In Render dashboard: `Disks → Add → Mount Path: /data`  
-Update in config: `DB_PATH = "/data/jee_saarthi.db"`
+### 📌 Explanation:
+- `type: worker` → Background bot (no web server)
+- `buildCommand` → Dependencies install karega
+- `startCommand` → Bot run karega
+- `envVars` → Secrets (token, admin id)
 
 ---
 
-### 🚂 Railway *($5/mo · Super Fast Deploy)*
+## 🔗 Step 2 — Deploy on Render
 
-**Step 1 — Create `Procfile` in project root**
+1. Code ko GitHub pe push karo  
+2. Open 👉 https://render.com  
+3. Click **New → Background Worker**  
+4. Apna repo connect karo  
+5. Environment variables verify/add karo  
+6. Click **Create Service**
+
+⏳ First deploy me 2–5 min lag sakte hain
+
+---
+
+## 💾 Step 3 — Add Persistent Storage (IMPORTANT)
+
+By default Render storage temporary hota hai ❌  
+Restart ke baad data delete ho jayega
+
+### ✅ Fix:
+
+- Dashboard → **Disks**
+- Click **Add Disk**
+- Mount Path set karo:
+
+```
+/data
+```
+
+---
+
+## ⚙️ Step 4 — Update Database Path
+
+Apne code/config me DB path change karo:
+
+```python
+DB_PATH = "/data/jee_saarthi.db"
+```
+
+---
+
+## 🔁 Auto Deploy Feature
+
+Render ka best feature 🔥
+
+- GitHub me push karte hi bot automatically redeploy ho jayega
+- Manual restart ki need nahi
+
+---
+
+## ⚠️ Notes
+
+- Free tier me bot idle ho sakta hai (no activity → sleep)
+- Logs dekhne ke liye dashboard ka use karo
+- Large bots ke liye paid plan better rahega
+
+</details>
+
+---
+
+<details>
+  <summary><b>🚂 Railway ($5/mo · Fastest Deploy · Developer Friendly)</b></summary>
+
+## 🚀 Overview
+Railway ek powerful platform hai jo fast deploy + better performance deta hai.  
+Thoda paid hai, but serious bots ke liye best option 🔥
+
+---
+
+## 📁 Step 1 — Create `Procfile`
+
+Project root me file banao:
+
+```
+Procfile
+```
+
+Aur isme likho:
+
 ```
 worker: python bot.py
 ```
 
-**Step 2 — Deploy via Railway CLI**
+### 📌 Explanation:
+- `worker` → Background process define karta hai
+- `python bot.py` → Bot start command
+
+---
+
+## 🛠️ Step 2 — Install & Deploy via CLI
+
 ```bash
 # Install Railway CLI
 npm i -g @railway/cli
 
-# Login & deploy
+# Login
 railway login
-railway init
-railway up
 
-# Set environment variables
+# Initialize project
+railway init
+
+# Deploy project
+railway up
+```
+
+---
+
+## 🔑 Step 3 — Set Environment Variables
+
+```bash
 railway variables set BOT_TOKEN=your_token
 railway variables set ADMIN_ID=123456789
 ```
 
-**Step 3 —** Dashboard → Add Volume → Mount at `/app/data`  
-Set `DB_PATH = "/app/data/jee_saarthi.db"`
+💡 Alternative: Dashboard se bhi set kar sakte ho
 
 ---
 
-### ⚡ Koyeb *(Free Tier · Global Edge)*
+## 💾 Step 4 — Add Persistent Volume
 
-**Step 1 — Create `koyeb.yaml` in project root**
+Data loss avoid karne ke liye ye step MUST hai ⚠️
+
+### Steps:
+
+- Railway Dashboard open karo  
+- Apna project select karo  
+- Click **Add Volume**  
+- Mount Path set karo:
+
+```
+/app/data
+```
+
+---
+
+## ⚙️ Step 5 — Update Database Path
+
+```python
+DB_PATH = "/app/data/jee_saarthi.db"
+```
+
+---
+
+## ⚡ Features
+
+- 🚀 Super fast deployment
+- 🔄 Instant redeploy
+- 📊 Better logs & monitoring
+- 🔒 Stable uptime (no sleep issue like free tier)
+
+---
+
+## ⚠️ Notes
+
+- Free trial ke baad ~$5/month cost aata hai
+- Beginners ke liye thoda complex ho sakta hai
+- Production bots ke liye highly recommended
+
+</details>
+
+---
+<details>
+  <summary><b>⚡ Koyeb (Free Tier · Global Edge · Fast Deploy)</b></summary>
+
+## 🚀 Overview
+Koyeb ek modern cloud platform hai jo global edge infrastructure pe run karta hai.  
+Iska matlab — aapka bot duniya ke multiple regions me fast response de sakta hai 🌍⚡
+
+Free tier available hai aur deployment kaafi smooth hota hai.
+
+---
+
+## 🧾 Step 1 — Create `koyeb.yaml`
+
+Project ke root folder me ek file banao:
+
 ```yaml
 name: jee-saarthi-bot
 services:
@@ -271,50 +447,170 @@ services:
         value: "123456789"
 ```
 
-**Step 2 —** Go to koyeb.com → Create App → Connect GitHub → Select repo → Set env vars → Deploy
+---
 
-> Koyeb auto-detects Python and installs `requirements.txt`
+## 📌 Configuration Explanation
 
-**Step 3 —** For SQLite persistence, use Koyeb Volumes. Add a persistent volume and set `DB_PATH = "/mnt/data/jee_saarthi.db"`
+- `type: worker` → Background bot (no web server needed)
+- `buildpack: python` → Auto Python environment setup
+- `command: python bot.py` → Bot start command
+- `env` → Sensitive data (token, admin id)
 
 ---
 
-### 🟣 Heroku *($7/mo · Eco Dyno)*
+## 🔗 Step 2 — Deploy on Koyeb
 
-**Step 1 — Create required files**
+1. Open 👉 https://koyeb.com  
+2. Click **Create App**  
+3. Connect your **GitHub repository**  
+4. Select your project repo  
+5. Add / verify environment variables  
+6. Click **Deploy**
 
-`Procfile`:
+⏳ Deployment usually takes 1–3 minutes
+
+---
+
+## ⚙️ Auto Detection Feature
+
+Koyeb automatically:
+- Detects Python project 🐍  
+- Installs dependencies from `requirements.txt` 📦  
+- Builds and runs your bot 🚀  
+
+No manual setup required 🔥
+
+---
+
+## 💾 Step 3 — Add Persistent Storage (Important)
+
+By default storage temporary hota hai ❌  
+Restart hone pe SQLite DB delete ho sakta hai
+
+### ✅ Fix:
+
+- Koyeb Dashboard → **Volumes**
+- Add new volume  
+- Mount path set karo:
+
+```
+/mnt/data
+```
+
+---
+
+## 🗄️ Update Database Path
+
+```python
+DB_PATH = "/mnt/data/jee_saarthi.db"
+```
+
+---
+
+## ⚠️ Notes
+
+- Free tier me limited resources milte hain
+- Logs dashboard me easily available hote hain
+- Production bots ke liye scaling option available hai
+
+</details>
+
+---
+
+<details>
+  <summary><b>🟣 Heroku ($7/mo · Easy Setup · Classic Platform)</b></summary>
+
+## 🚀 Overview
+Heroku ek popular cloud platform hai jo beginners ke liye kaafi easy hai.  
+Lekin ab ye fully paid ho chuka hai 💰
+
+---
+
+## 📁 Step 1 — Create Required Files
+
+### `Procfile`
 ```
 worker: python bot.py
 ```
 
-`runtime.txt`:
+### `runtime.txt`
 ```
 python-3.11.9
 ```
 
-**Step 2 — Deploy via Heroku CLI**
+---
+
+## 📌 Explanation
+
+- `Procfile` → Bot ka run command define karta hai
+- `runtime.txt` → Python version fix karta hai
+
+---
+
+## 🛠️ Step 2 — Deploy via Heroku CLI
+
 ```bash
-# Login & create app
+# Login
 heroku login
+
+# Create app
 heroku create jee-saarthi-bot
 
 # Set environment variables
 heroku config:set BOT_TOKEN=your_bot_token
 heroku config:set ADMIN_ID=123456789
 
-# Deploy
+# Deploy code
 git push heroku main
 
-# Scale worker dyno (no web dyno needed)
+# Enable worker (disable web)
 heroku ps:scale web=0 worker=1
 
-# Check logs
+# View logs
 heroku logs --tail
 ```
 
-> ⚠️ **Important:** Heroku has ephemeral filesystem. SQLite won't persist between restarts. Use Heroku Postgres addon or backup DB regularly (already done via daily backup job to admin).
+---
 
+## ⚠️ Important — Storage Limitation
+
+Heroku ka filesystem **ephemeral** hota hai ❌  
+Matlab:
+
+- Restart → Data delete  
+- SQLite reliable nahi hai  
+
+---
+
+## ✅ Recommended Solution
+
+### Option 1 — Use PostgreSQL (Best)
+- Heroku Postgres addon use karo  
+- Production ke liye recommended
+
+### Option 2 — Backup System
+- Daily DB backup admin ko send karo  
+- (Aap already use kar rahe ho 👍)
+
+---
+
+## ⚡ Features
+
+- Easy deployment 🚀  
+- Clean dashboard 📊  
+- Good for small to medium bots  
+
+---
+
+## ⚠️ Notes
+
+- Free plan available nahi hai  
+- Monthly ~$7 cost  
+- Heavy bots ke liye costly ho sakta hai  
+
+</details>
+
+---
 ---
 
 ## 🔧 Tech Stack
