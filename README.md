@@ -188,7 +188,6 @@ Track your daily study.
 </details>
 
 ---
----
 
 ## ⌨️ Bot Commands
 
@@ -719,7 +718,6 @@ Matlab:
 
 </details>
 
----
 ---
 
 ## 🔧 Tech Stack
