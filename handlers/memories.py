@@ -40,7 +40,7 @@ async def mem_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_banned(update):
         return ConversationHandler.END
     await query.edit_message_text(
-        f"{E['memories']} *Memories*\n\nSelect a category:",
+        f"{E['memories']} *Memories*\n\n Here you can add your *silly mistakes*, *errors* and *important questions*.So that you can recall them later and see them.",
         reply_markup=mem_home_kb(), parse_mode="Markdown"
     )
     return ConversationHandler.END
@@ -54,7 +54,7 @@ async def mem_category_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     mem_type = query.data.replace("mem_", "")   # silly / error / important
-    label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
+    label_map = {"silly": "😣 Silly", "error": "❗ Error", "important": "⭐ Important"}
     label = label_map.get(mem_type, mem_type.capitalize())
 
     uid = _uid(update)
@@ -92,7 +92,7 @@ async def mem_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ).fetchall()
     conn.close()
 
-    label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
+    label_map = {"silly": "😣 Silly", "error": "❗ Error", "important": "⭐ Important"}
     label = label_map.get(mem_type, mem_type.capitalize())
 
     if not mems:
@@ -131,7 +131,7 @@ async def mem_add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     mem_type = query.data.replace("mem_add_", "")
     context.user_data["mem_draft"] = {"type": mem_type}
-    labels = {"silly": "🤪 Silly Mistake", "error": "❗ Error", "important": "⭐ Important"}
+    labels = {"silly": "😣 Silly Mistake", "error": "❗ Error", "important": "⭐ Important"}
     await query.edit_message_text(
         f"{labels.get(mem_type, 'Memory')} — Step 1\n\nEnter a *title* for this memory:",
         reply_markup=cancel_btn(f"mem_{mem_type}"), parse_mode="Markdown"
@@ -284,7 +284,7 @@ async def mem_view(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     idx = max(0, min(idx, len(mems) - 1))
     m   = mems[idx]
-    label_map = {"silly": "🤪 Silly", "error": "❗ Error", "important": "⭐ Important"}
+    label_map = {"silly": "😣 Silly", "error": "❗ Error", "important": "⭐ Important"}
     text = (
         f"{label_map.get(mem_type, mem_type)} — *{m['title']}*\n"
         f"🗓 {m['created'][:10]}\n\n"
