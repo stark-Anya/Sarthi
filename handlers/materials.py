@@ -118,7 +118,7 @@ async def books_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not rows:
         await query.edit_message_text(
-            f"No books uploaded for {subject} — Class {class_num} yet.",
+            f"No books uploaded for {subject} — Class {class_num} yet. Contact Admin ( @carelessxowner ) to add books.",
             reply_markup=back_btn(f"books_subj_{class_num}")
         )
         return ConversationHandler.END
