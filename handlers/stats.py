@@ -28,7 +28,7 @@ SUBJECT_EMOJI = {
     "PHY":   "⚛️",
     "CHEM":  "🧪",
     "MATH":  "📏",
-    "BIO":   "🌿",
+    "BIO":   "🧬",
     "OTHER": "📌",
     "General": "📚",
 }
