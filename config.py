@@ -1,8 +1,8 @@
 # Mister Starkieeee
 
-BOT_TOKEN  = ""
-ADMIN_ID   = 8275132868  # your owner id , 
-ADMIN_PASS = "Admin_pass" # set password for admin panell , any one can access admin panell to use this password !!...
-DB_PATH    = "jee_saarthi.db" # leave as same 
-TIMEZONE   = "Asia/Kolkata" # leave as same 
-DB_CLEAR_PASS = "db_clear_pass" # you can set same password as admin pass ! it will use for clear bot all data base !! 
+BOT_TOKEN      = "your_bot_token_here"       # From @BotFather
+ADMIN_ID       = 123456789                   # Your Telegram user ID
+ADMIN_PASS     = "your_admin_password"       # Admin panel password
+DB_CLEAR_PASS  = "your_db_clear_password"   # Separate clear DB password
+DB_PATH        = "jee_saarthi.db"
+TIMEZONE       = "Asia/Kolkata"
