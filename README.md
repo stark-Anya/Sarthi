@@ -35,50 +35,159 @@
 | **16** | **5100+** | **12** | **50+** | **6** |
 
 ---
+<details>
+  <summary><b>✨ Features (Click to Expand)</b></summary>
 
-## ✨ Features
+## 🚀 Overview
+Powerful all-in-one **JEE/NEET Preparation Assistant Bot** — designed to manage your entire study workflow efficiently.
+
+---
 
 ### 📅 Today Dashboard
-Add tasks with subject prefixes, toggle done, focus timer (15/25/50 min), test scores, doubts, revisions — all in one place.
+Your daily command center.
+
+- Add tasks with subject prefixes  
+- Mark tasks as done / pending  
+- Built-in focus timer (15 / 25 / 50 min)  
+- Track test scores  
+- Manage doubts & revisions  
+
+📌 Everything — in one clean dashboard.
+
+---
 
 ### 🧠 Smart Memories
-Save Silly mistakes, Errors, Important concepts — with title, content (photo/text), answer, and key points. Browse history anytime.
+Never repeat mistakes again.
+
+- Save:
+  - Silly mistakes 🤦‍♂️  
+  - Errors ❌  
+  - Important concepts 💡  
+- Add title, content (text/photo), answer & key points  
+- Browse history anytime  
+
+---
 
 ### 📚 Materials Library
-Class-wise Books (Class 11/12), Formulas, PYQs (JEE Mains/Adv/NEET), and 11&12 Mix books — all with inline navigation.
+All study resources in one place.
+
+- Class-wise Books (Class 11 / 12)  
+- Formulas  
+- PYQs (JEE Mains / Advanced / NEET)  
+- Mixed (11 + 12) books  
+- Smooth inline navigation  
+
+---
 
 ### 📊 Progress Stats
-Weekly, Monthly and All-Time dashboard — study hours, subject breakdown with bars, streak graph, test score trends, and improvement tracking.
+Track your improvement visually.
+
+- Weekly / Monthly / All-time stats  
+- Study hours tracking  
+- Subject-wise breakdown (bars)  
+- Streak graph 🔥  
+- Test score trends & improvement  
+
+---
 
 ### 🔄 Spaced Revision
-Mark a lecture as watched → auto-schedule revisions at 1 day, 3 days, 7 days, 30 days. Daily reminder at 9 AM.
+Science-backed revision system.
+
+- Mark lecture as watched  
+- Auto-schedules revision at:
+  - 1 day  
+  - 3 days  
+  - 7 days  
+  - 30 days  
+- Daily reminder at **9 AM**
+
+---
 
 ### 🎯 Lecture Manager
-Save lecture links with alert times, subject, and custom messages. Get pinged at exact time with Open Link, Mark Watched, Snooze buttons.
+Never miss a lecture again.
+
+- Save lecture links  
+- Set alert time  
+- Add subject & custom message  
+- Get buttons:
+  - Open Link  
+  - Mark Watched  
+  - Snooze  
+
+---
 
 ### 🔍 Universal Search
-`/search query` — searches across memories, daily reports, formulas, books, PYQs, mix books all at once. Delete directly from results.
+Find anything instantly.
+
+```
+/search query
+```
+
+- Searches across:
+  - Memories  
+  - Daily reports  
+  - Formulas  
+  - Books  
+  - PYQs  
+- Delete directly from results  
+
+---
 
 ### 🛡️ Admin Panel
-Password-based access. Upload formulas, books, PYQs with multiple PDFs. Edit titles, delete content, broadcast, manage users.
+Full control access.
+
+- Password-protected login  
+- Upload:
+  - Formulas  
+  - Books  
+  - PYQs (multi-file support)  
+- Edit / delete content  
+- Broadcast messages  
+- Manage users  
+
+---
 
 ### 🔔 Smart Reminders
-- **6 AM** — morning message with streak
-- **7 AM** — formula flash card
-- **8 PM** — doubt reminder (if pending 2+ days)
-- **9 AM** — revision alert
-- **11 PM** — daily SQLite DB backup to admin
-- **Sunday** — weekly report
+Automated daily system ⏰
+
+- **6 AM** → Morning message + streak  
+- **7 AM** → Formula flashcard  
+- **9 AM** → Revision alert  
+- **8 PM** → Doubt reminder (if pending 2+ days)  
+- **11 PM** → Daily DB backup  
+- **Sunday** → Weekly report  
+
+---
 
 ### 🗄️ Daily DB Backup
-Entire SQLite database automatically sent to admin at 11 PM every day. Never lose your data.
+Your data is always safe.
+
+- Full SQLite database backup  
+- Sent automatically to admin at **11 PM daily**  
+
+---
 
 ### 💭 Thoughts & Motivation
-Private vaults for random thoughts and motivational quotes/images. Navigate, add, delete — all inline.
+Private vault system.
+
+- Save random thoughts  
+- Store motivational quotes/images  
+- Add / delete / browse anytime  
+
+---
 
 ### 📒 Daily Reports
-Write today's study report (text or photo). View & update anytime. Browse all past reports with navigation.
+Track your daily study.
 
+- Write report (text or photo)  
+- Edit anytime  
+- Browse all past reports easily  
+
+---
+
+</details>
+
+---
 ---
 
 ## ⌨️ Bot Commands
