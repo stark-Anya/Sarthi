@@ -1,5 +1,3 @@
-# STARK UI
-
 from telegram import InlineKeyboardButton as Btn, InlineKeyboardMarkup as Markup
 
 E = {
@@ -8,7 +6,7 @@ E = {
     "formulas": "📐",
     "thoughts": "💭",
     "motivation": "🔥",
-    "admin":    "🧑‍💻",
+    "admin":    "🛡️",
     "back":     "◀️",
     "cancel":   "❌",
     "done":     "✅",
@@ -23,9 +21,9 @@ E = {
     "revision": "🔄",
     "prev":     "⬅️",
     "next":     "➡️",
-    "silly":    "😣",
+    "silly":    "🤪",
     "error":    "❗",
-    "important":"🌟",
+    "important":"⭐",
     "log":      "📒",
     "formula":  "🔢",
     "broadcast":"📢",
@@ -36,12 +34,12 @@ E = {
     "search":   "🔍",
     "skip":     "⏭️",
     "snooze":   "😴",
-    "watch":    "👀",
+    "watch":    "👁️",
     "link":     "🔗",
     "phy":      "⚛️",
     "chem":     "🧪",
     "math":     "📏",
-    "bio":      "🧬",
+    "bio":      "🌿",
     "other":    "📌",
 }
 
@@ -50,7 +48,7 @@ def home_kb():
     return Markup([
         [Btn(f"{E['today']} Today",      callback_data="today_home"),
          Btn(f"{E['memories']} Memories", callback_data="mem_home")],
-        [Btn(f"{E['formulas']} Formulas", callback_data="formula_home"),
+        [Btn("📚 Materials",               callback_data="materials_home"),
          Btn(f"{E['thoughts']} Thoughts",  callback_data="thought_home")],
         [Btn(f"{E['motivation']} Motivation", callback_data="motiv_home"),
          Btn(f"{E['admin']} Admin",           callback_data="admin_home")],
