@@ -148,6 +148,16 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
 
+    c.execute("""CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        class_num TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        book_name TEXT NOT NULL,
+        file_id TEXT,
+        added_by INTEGER,
+        created TEXT DEFAULT (datetime('now'))
+    )""")
+
     conn.commit()
     conn.close()
     print("[DB] All tables ready.")
