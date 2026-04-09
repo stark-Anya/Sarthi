@@ -148,19 +148,27 @@ def init_db():
         FOREIGN KEY(user_id) REFERENCES users(id)
     )""")
 
+    # ── Books: class_num, subject, book_name, multiple files ──
     c.execute("""CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        class_num TEXT NOT NULL,
-        subject TEXT NOT NULL,
+        section_id INTEGER,
+        class_num TEXT,
+        subject TEXT,
         book_name TEXT NOT NULL,
         file_id TEXT,
         added_by INTEGER,
         created TEXT DEFAULT (datetime('now'))
     )""")
+    # backward-compat: add section_id column if missing
+    try:
+        c.execute("ALTER TABLE books ADD COLUMN section_id INTEGER")
+    except Exception:
+        pass
 
-    # PYQs: exam_type = 'mains'/'adv'/'neet', title = paper name, multiple files per title
+    # ── PYQs ──
     c.execute("""CREATE TABLE IF NOT EXISTS pyqs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        section_id INTEGER,
         exam_type TEXT NOT NULL,
         title TEXT NOT NULL,
         file_id TEXT NOT NULL,
@@ -168,22 +176,98 @@ def init_db():
         added_by INTEGER,
         created TEXT DEFAULT (datetime('now'))
     )""")
+    try:
+        c.execute("ALTER TABLE pyqs ADD COLUMN section_id INTEGER")
+    except Exception:
+        pass
 
-    # 11&12 Mix books: no class, just title + PDF(s)
+    # ── Mix books (no class) ──
     c.execute("""CREATE TABLE IF NOT EXISTS mix_books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        section_id INTEGER,
         book_name TEXT NOT NULL,
         file_id TEXT NOT NULL,
         file_name TEXT,
         added_by INTEGER,
         created TEXT DEFAULT (datetime('now'))
     )""")
+    try:
+        c.execute("ALTER TABLE mix_books ADD COLUMN section_id INTEGER")
+    except Exception:
+        pass
+
+    # ══════════════════════════════════════════════════════════════════════
+    #  DYNAMIC SECTIONS TABLE
+    #  section_type: 'books' | 'mix' | 'pyq' | 'formula'
+    #  For 'books': nav is Class → Subject → Title → PDF
+    #  For 'mix':   nav is direct Title list → PDF(s)
+    #  For 'pyq':   nav is ExamType → Title → PDF(s)
+    #  For 'formula': points to formula_home
+    # ══════════════════════════════════════════════════════════════════════
+    c.execute("""CREATE TABLE IF NOT EXISTS material_sections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        emoji TEXT DEFAULT '📁',
+        section_type TEXT NOT NULL,
+        sort_order INTEGER DEFAULT 0,
+        created TEXT DEFAULT (datetime('now'))
+    )""")
+
+    # ── Seed default sections if table is empty ──
+    count = c.execute("SELECT COUNT(*) FROM material_sections").fetchone()[0]
+    if count == 0:
+        defaults = [
+            ("Books",      "📚", "books",   1),
+            ("Formulas",   "📐", "formula", 2),
+            ("PYQs",       "📋", "pyq",     3),
+            ("11 & 12 Mix","🔀", "mix",     4),
+        ]
+        c.executemany(
+            "INSERT INTO material_sections (name, emoji, section_type, sort_order) VALUES (?,?,?,?)",
+            defaults
+        )
 
     conn.commit()
     conn.close()
     print("[DB] All tables ready.")
 
 
+# ── Section helpers ──────────────────────────────────────────────────────────
+def get_sections():
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT * FROM material_sections ORDER BY sort_order, id"
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def add_section(name: str, emoji: str, section_type: str) -> int:
+    conn = get_conn()
+    c = conn.cursor()
+    max_order = c.execute("SELECT COALESCE(MAX(sort_order),0) FROM material_sections").fetchone()[0]
+    c.execute(
+        "INSERT INTO material_sections (name, emoji, section_type, sort_order) VALUES (?,?,?,?)",
+        (name, emoji, section_type, max_order + 1)
+    )
+    sid = c.lastrowid
+    conn.commit()
+    conn.close()
+    return sid
+
+
+def delete_section(section_id: int):
+    """Delete section and ALL its content files."""
+    conn = get_conn()
+    conn.execute("DELETE FROM material_sections WHERE id=?", (section_id,))
+    conn.execute("DELETE FROM books      WHERE section_id=?", (section_id,))
+    conn.execute("DELETE FROM mix_books  WHERE section_id=?", (section_id,))
+    conn.execute("DELETE FROM pyqs       WHERE section_id=?", (section_id,))
+    conn.commit()
+    conn.close()
+
+
+# ── User helpers ─────────────────────────────────────────────────────────────
 def upsert_user(tg_id: int, name: str):
     conn = get_conn()
     conn.execute(
