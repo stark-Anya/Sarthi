@@ -6,3 +6,4 @@ ADMIN_PASS     = "your_admin_password"       # Admin panel password
 DB_CLEAR_PASS  = "your_db_clear_password"   # Separate clear DB password
 DB_PATH        = "jee_saarthi.db"
 TIMEZONE       = "Asia/Kolkata"
+BACKUP_GROUP_ID  = -1001234567890  
