@@ -23,7 +23,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-PAGE = 8   # items per page
+PAGE = 6   # items per page
 
 # ── States ───────────────────────────────────────────────────────────────────
 (
