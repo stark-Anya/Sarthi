@@ -374,3 +374,13 @@ def update_streak(tg_id: int):
     conn.execute("UPDATE users SET streak=?, last_active=? WHERE tg_id=?",
                  (streak, today_str, tg_id))
     conn.commit(); conn.close()
+
+
+def get_sections():
+    return mat_get_children(None)
+
+def add_section(name):
+    return mat_add_node(None, name)
+
+def delete_section(section_id):
+    return mat_delete_node(section_id)
