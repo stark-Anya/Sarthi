@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     DB_CLEAR_PASS_STATE,
     # Section management
     SEC_NAME, SEC_EMOJI,
-) = range(20)
+) = range(19)
 
 _authed: set = set()   # session-authed tg_ids (password-based, no ID check)
 
