@@ -384,3 +384,11 @@ def add_section(name):
 
 def delete_section(section_id):
     return mat_delete_node(section_id)
+
+
+def get_setting(key, default=None):
+    return default
+def set_setting(key, value):
+    pass
+def delete_setting(key):
+    pass
